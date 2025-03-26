@@ -11,7 +11,10 @@ def find_potential_bets(match_to_compare, matches):
     Handles both 3-way and 2-way bets.
     """
     similar_matches = [
-        match for match in matches if match_to_compare.home_team == match.home_team and match_to_compare.away_team == match.away_team
+        match for match in matches 
+        if match_to_compare.home_team == match.home_team 
+        and match_to_compare.away_team == match.away_team
+        and match_to_compare.match_date == match.match_date  # Ensure the same start time
     ]
 
     if not similar_matches:
