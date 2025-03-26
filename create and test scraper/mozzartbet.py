@@ -1,8 +1,8 @@
 from selenium.webdriver.common.by import By
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
+import os
 
 
 class Match:
@@ -13,11 +13,13 @@ class Match:
         self.odd_x = odd_x
         self.odd_2 = odd_2
 
-
 def mozzart_arrays():
     options = Options()
     options.add_experimental_option("detach", True)
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    
+    chromedriver_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "chromedriver.exe")
+    service = Service(chromedriver_path)
+    driver = webdriver.Chrome(service=service, options=options)
     url = "https://www.mozzartbet.co.ke/"
     driver.get(url)
     driver.implicitly_wait(10)
