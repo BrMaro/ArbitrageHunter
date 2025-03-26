@@ -15,21 +15,30 @@ class SportPesaScraper(BaseScraper):
             "Mozilla/5.0 (Linux; Android 7.0; Nexus 5X Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Mobile Safari/537.36"
         ]
         headers = {"User-Agent": random.choice(user_agents)}
-        response = requests.get(SCRAPER_SETTINGS["sportpesa"]["url"], headers=headers)
+        all_highlights_data = []
 
-        highlights_data = response.json()
-        match_ids = [str(item["id"]) for item in highlights_data]
+        # Collect data for highlights 1 through 12
+        for highlight_id in range(1, 13):
+            sportpesa_highlights_url = f"https://www.ke.sportpesa.com/api/highlights/{highlight_id}"
+            response = requests.get(sportpesa_highlights_url, headers=headers)
+            highlights_data = response.json()
+            all_highlights_data.extend(highlights_data)
 
+        # Extract match IDs as strings
+        match_ids = [str(item["id"]) for item in all_highlights_data]
+
+        # Construct the markets URL using the match IDs
         match_ids_str = ",".join(match_ids)
         sportpesa_markets_url = f"https://www.ke.sportpesa.com/api/games/markets?games={match_ids_str}&markets=10"
         markets_response = requests.get(sportpesa_markets_url, headers=headers)
         markets_data = markets_response.json()
 
-        for highlight in highlights_data:
+        # Combine the markets data into the highlights data
+        for highlight in all_highlights_data:
             match_id = str(highlight["id"])
             highlight["markets"] = markets_data.get(match_id, [])
 
-        return highlights_data
+        return all_highlights_data
 
     # def __init__(self, website, home_team, away_team, match_date=None, sport=None):
 
@@ -40,8 +49,16 @@ class SportPesaScraper(BaseScraper):
             sport = match.get("sport").get("name")
             date = convert_to_eat(match.get("date"))
             markets = match.get("markets", [])
-            market_name = markets[0].get("name")
+            
+            if not markets or not markets[0].get("selections"):
+                # Skip if no markets or selections are available
+                continue
+
             selections = markets[0].get("selections", [])
+            if len(selections) < 3:
+                # Skip if there are not enough selections for home, draw, and away odds
+                continue
+
             home_team = selections[0].get("name")
             odds_1 = selections[0].get("odds")
             odds_x = selections[1].get("odds")
@@ -62,3 +79,4 @@ scraper = SportPesaScraper()
 matches = scraper.scrape()
 for match in matches:
     print(match)
+print(len(matches))
